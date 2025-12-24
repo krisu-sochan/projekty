@@ -1,39 +1,106 @@
 import pygame
 from screen import *
 
-Player_Width = 20
-Player_Height = 60
-Player_X = (Width - Player_Width) / 2
-Player_Y = (Height - Player_Height) / 2
-
-player_image = pygame.image.load('models/art/characters/player_gun.png')
-player_image = pygame.transform.scale(player_image, (Player_Width, Player_Height))
-
-class PLAYER(pygame.Rect):
+class PLAYER:
     def __init__(self):
-        pygame.Rect.__init__(self,Player_X, Player_Y, Player_Width, Player_Height)
-        # self.image = player_image
-        self.color = (0, 255, 0)
-        self.distance = 5
+        # ======================
+        # POZYCJA
+        # ======================
+        self.x = Width // 2
+        self.y = Height // 2
 
-    def Player_Status(self):
+        # ======================
+        # WCZYTYWANIE SPRITE’ÓW
+        # ======================
+        self.walk_sheet = pygame.image.load(
+            "models/art/characters/Ranger/SMS_Ranger_Walk_2_strip4.png"
+        ).convert_alpha()
+
+        self.idle_sheet = pygame.image.load(
+            "models/art/characters/Ranger/SMS_Ranger_Idle_1_strip4.png"
+        ).convert_alpha()
+
+        # ======================
+        # ANIMACJE
+        # ======================
+        self.animations = {
+            "walk": self.load_strip(self.walk_sheet),
+            "idle": self.load_strip(self.idle_sheet)
+        }
+
+        # ======================
+        # STAN
+        # ======================
+        self.state = "idle"
+        self.frame = 0
+        self.anim_speed = 0.15
+        self.image = self.animations["idle"][0]
+
+        # ======================
+        # RUCH
+        # ======================
+        self.speed = 3
+        self.facing_left = False
+
+    # ======================
+    # ŁADOWANIE KLATEK
+    # ======================
+    def load_strip(self, sheet):
+        frames = []
+        for i in range(4):
+            frame = sheet.subsurface((i * 16, 0, 16, 32))
+            frame = pygame.transform.scale(frame, (64, 64))
+            frames.append(frame)
+        return frames
+
+    # ======================
+    # UPDATE
+    # ======================
+    def update(self):
         keys = pygame.key.get_pressed()
+        moving = False
 
-        # góra
-        if keys[pygame.K_UP]:
-            self.y = max(0, self.y - self.distance)
-
-        # dół
-        if keys[pygame.K_DOWN]:
-            self.y = min(Height - Player_Height, self.y + self.distance)
-
-        # lewo
         if keys[pygame.K_LEFT]:
-            self.x = max(0, self.x - self.distance)
-
-        # prawo
+            self.x -= self.speed
+            self.facing_left = True
+            moving = True
         if keys[pygame.K_RIGHT]:
-            self.x +=self.distance
+            self.x += self.speed
+            self.facing_left = False
+            moving = True
+        if keys[pygame.K_UP]:
+            self.y -= self.speed
+            moving = True
+        if keys[pygame.K_DOWN]:
+            self.y += self.speed
+            moving = True
 
-    def draw(self, surface):
-        pygame.draw.rect(surface, self.color, self)
+        # ======================
+        # ZMIANA STANU
+        # ======================
+        self.state = "walk" if moving else "idle"
+
+        self.animate()
+
+    # ======================
+    # ANIMACJA
+    # ======================
+    def animate(self):
+        frames = self.animations[self.state]
+
+        self.frame += self.anim_speed
+        if self.frame >= len(frames):
+            self.frame = 0
+
+        image = frames[int(self.frame)]
+
+        if self.facing_left:
+            image = pygame.transform.flip(image, True, False)
+
+        self.image = image
+
+    # ======================
+    # RYSOWANIE
+    # ======================
+    def draw(self, screen):
+        screen.blit(self.image, (self.x, self.y))
