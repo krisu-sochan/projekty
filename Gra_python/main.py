@@ -12,7 +12,9 @@ from map import Map
 # ======================
 pygame.init()
 screen = pygame.display.set_mode(Res)
+# icon="models/art/characters/Ranger/SMS_Ranger_Title_Screen.png"
 pygame.display.set_caption("Beat 'em up")
+
 clock = pygame.time.Clock()
 
 # ======================
